@@ -9,10 +9,12 @@ from typing import Any
 st.title("Whisper Audio Transcription App")
 
 
+@st.cache_resource
 def load_model():
     return whisper.load_model("base.en")
 
 
+@st.cache_resource
 def load_chat_model():
     return LangchainLLama(model="llama3.2")
 
@@ -29,16 +31,23 @@ if "chat_model" not in st.session_state:
 uploaded_file = st.file_uploader("Upload an audio file", type=[
                                  "mp3", "wav", "m4a", "webm", "ogg", "flac"])
 
+if uploaded_file is None:
+    st.session_state.pop("upload_file", None)
+    st.session_state.pop("transcription", None)
+    st.session_state.pop("summary", None)
+
 if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/wav")
     # Save file to temp and store path in session state
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        st.session_state["upload_file"] = tmp_file.name
+        if st.session_state.get("upload_file", None) == tmp_file.name:
+            # Clear previous results if new file uploaded
+            st.session_state.pop("transcription", None)
+            st.session_state.pop("summary", None)
+        else:
+            tmp_file.write(uploaded_file.read())
+            st.session_state["upload_file"] = tmp_file.name
 
-    # Clear previous results if new file uploaded
-    st.session_state.pop("transcription", None)
-    st.session_state.pop("summary", None)
 
 if "upload_file" in st.session_state:
     if st.button("Transcribe"):
@@ -58,12 +67,17 @@ if "transcription" in st.session_state:
             summary = st.session_state["chat_model"].get_response(
                 f"Summarize the following text: {st.session_state['transcription']}")
             st.session_state["summary"] = summary
-            st.subheader("Summary:")
-            st.markdown("> " + summary)
-            print(st.session_state)
+            # st.subheader("Summary:")
+            # st.markdown("> " + summary)
 
     st.button("Summarize", on_click=summary)
 
+summary_placeholder = st.empty()
+if "summary" in st.session_state:
+    summary_placeholder.markdown(f"""
+                                 ### Summary
+                                 > {st.session_state["summary"]}
+    """)
 # Load the model only once using session state
 
 
