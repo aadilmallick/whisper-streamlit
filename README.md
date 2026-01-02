@@ -219,7 +219,7 @@ python mcp_practice.py
   - Project metadata (name: pythonai, version: 0.1.0)
   - Python version requirement (>=3.13)
   - Complete dependency list including:
-    - ML/AI: whisper, langchain, ollama integrations
+    - ML/AI: openai-whisper, langchain, ollama integrations
     - Vector stores: chromadb, faiss-cpu
     - UI: streamlit
     - Document processing: pypdf, youtube-transcript-api
